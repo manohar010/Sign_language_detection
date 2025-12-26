@@ -35,9 +35,6 @@ class DataIngestion:
             raise signException(e, sys)
 
     def extract_zip_file(self, zip_file_path: str) -> str:
-        """
-        Extracts the zip file into the feature store directory
-        """
         try:
             feature_store_path = self.data_ingestion_config.feature_store_file_path
             os.makedirs(feature_store_path, exist_ok=True)
@@ -56,16 +53,17 @@ class DataIngestion:
             zip_file_path = self.download_data()
             feature_store_path = self.extract_zip_file(zip_file_path)
 
+            data_store_path = os.path.join(feature_store_path, "Sign_language_data")
+
             data_ingestion_artifact = DataIngestionArtifact(
                 data_zip_file_path=zip_file_path,
-                feature_store_path=feature_store_path
+                feature_store_path=data_store_path
             )
             
             logging.info("Exited initiate_data_ingestion method of DataIngestion class")
             logging.info(f"Data Ingestion artifact: {data_ingestion_artifact}")
             
             return data_ingestion_artifact
-         
+            
         except Exception as e:
             raise signException(e, sys)
-        
