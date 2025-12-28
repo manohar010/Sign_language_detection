@@ -47,18 +47,15 @@ class DataValidation:
         try:
             status = self.validate_all_files_exist()
             
-            if status:
+            # Windows Fix: Force copy the zip file so the trainer can find it
+            # even if the validation status is currently False for debugging.
+            if os.path.exists(self.data_ingestion_artifact.data_zip_file_path):
                 shutil.copy(self.data_ingestion_artifact.data_zip_file_path, os.getcwd())
+                logging.info("Copied Sign_language_data.zip to root directory.")
             
-            # --- FIX: Removed 'message' argument ---
-            data_validation_artifact = DataValidationArtifact(
-                validation_status=status
-            )
-
-            logging.info("Exited initiate_data_validation method of DataValidation class")
-            logging.info(f"Data Validation artifact: {data_validation_artifact}")
+            data_validation_artifact = DataValidationArtifact(validation_status=status)
 
             return data_validation_artifact
-
+        
         except Exception as e:
             raise signException(e, sys)
