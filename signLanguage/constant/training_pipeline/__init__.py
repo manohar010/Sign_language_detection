@@ -1,35 +1,14 @@
 import os
 
 ARTIFACTS_DIR: str = "artifacts"
-
-
-"""
-Data Ingestion related constant start with DATA_INGESTION VAR NAME
-"""
 DATA_INGESTION_DIR_NAME: str = "data_ingestion"
+DATA_INGESTION_FEATURE_STORE_DIR: str = "feature_store"
+DATA_INGESTION_INGESTED_DIR: str = "ingested"
 
-DATA_INGESTION_FEATURE_STORN_DIR: str = "feature_store"
+# Use the standard shareable link with gdown
+DATA_DOWNLOAD_URL: str = "https://drive.google.com/file/d/1LKZGUkk_Wj75m_BL89zhMqHHWU-BgbHZ/view?usp=sharing"
 
-DATA_DOWNLOAD_URL: str = "https://github.com/manohar010/Sing_data/raw/refs/heads/main/Sign_language_data.zip"
-
-
-
-
-
-"""
-Data Validation related constant start with DATA_VALIDATION VAR NAME
-"""
+# Constants needed for config_entity.py
 DATA_VALIDATION_DIR_NAME: str = "data_validation"
-
-DATA_VALIDATION_STATUS_FILE = 'status.txt'
-
-DATA_VALIDATION_ALL_REQUIRED_FILE_LIST = ["train", "test", "data.yaml"]
-
-
-# Model Trainer related constants
-DATA_TRAINING_KEY = "yolov5"
-DATA_TRAINING_ARTIFACTS_DIR = "model_trainer"
-
-MODEL_TRAINER_PRETRAINED_WEIGHT_NAME = "yolov5s.pt" 
-MODEL_TRAINER_NO_EPOCHS = 100  # Increase for better accuracy
-MODEL_TRAINER_BATCH_SIZE = 16
+DATA_VALIDATION_VALID_DIR: str = "validated"
+DATA_VALIDATION_INVALID_DIR: str = "invalid"

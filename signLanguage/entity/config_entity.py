@@ -18,12 +18,12 @@ training_pipeline_config: TrainingPipelineConfig = TrainingPipelineConfig()
 class DataIngestionConfig:
     # Directory for data ingestion artifacts
     data_ingestion_dir: str = os.path.join(
-        training_pipeline_config.artifacts_dir, DATA_INGESTION_DIR_NAME  
+        training_pipeline_config.artifacts_dir, DATA_INGESTION_DIR_NAME
     )
 
     # Path to store the downloaded feature data
     feature_store_file_path: str = os.path.join(
-        data_ingestion_dir, DATA_INGESTION_FEATURE_STORN_DIR
+        data_ingestion_dir, DATA_INGESTION_FEATURE_STORE_DIR  # <--- Typo fixed here!
     )
 
     # Source URL for downloading the dataset
@@ -31,29 +31,9 @@ class DataIngestionConfig:
 
 @dataclass
 class DataValidationConfig:
-    # Directory for data validation artifacts
     data_validation_dir: str = os.path.join(
         training_pipeline_config.artifacts_dir, DATA_VALIDATION_DIR_NAME
     )
 
-    # Path to the file containing validation status (True/False)
-    valid_status_file_path: str = os.path.join(
-        data_validation_dir, DATA_VALIDATION_STATUS_FILE
-    )
-    
-    # List of files required for the project to proceed
-    required_file_list = DATA_VALIDATION_ALL_REQUIRED_FILE_LIST
-
-@dataclass
-class ModelTrainerConfig:
-    # Directory where the trained YOLOv5 model weights will be saved
-    model_trainer_dir: str = os.path.join(
-        training_pipeline_config.artifacts_dir, DATA_TRAINING_ARTIFACTS_DIR
-    )
-
-    # Pre-trained YOLOv5 weight file name (e.g., yolov5s.pt)
-    weight_name: str = MODEL_TRAINER_PRETRAINED_WEIGHT_NAME
-
-    # Training parameters for your 324 images
-    no_epochs: int = MODEL_TRAINER_NO_EPOCHS
-    batch_size: int = MODEL_TRAINER_BATCH_SIZE
+    valid_data_dir: str = os.path.join(data_validation_dir, DATA_VALIDATION_VALID_DIR)
+    invalid_data_dir: str = os.path.join(data_validation_dir, DATA_VALIDATION_INVALID_DIR)

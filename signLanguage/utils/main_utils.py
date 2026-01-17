@@ -3,7 +3,7 @@ import sys
 import yaml
 import base64
 
-from signLanguage.exception import signException
+from signLanguage.exception import SignException
 from signLanguage.logger import logging
 
 
@@ -15,7 +15,7 @@ def read_yaml_file(file_path: str) -> dict:
             return yaml.safe_load(yaml_file)
         
     except Exception as e:
-        raise signException(e, sys) from e   
+        raise SignException(e, sys) from e   
     
 
 
@@ -33,7 +33,7 @@ def read_yaml_file(file_path: str) -> dict:
                 logging.info("successfuly write_yaml_file")
 
         except Exception as e:
-            raise signException(e, sys)
+            raise SignException(e, sys) 
         
 
 def decodeImage(imgstring, fileName):
