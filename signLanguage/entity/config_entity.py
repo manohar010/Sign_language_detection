@@ -1,5 +1,5 @@
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field  # <--- Added 'field' to imports
 from datetime import datetime
 from signLanguage.constant.training_pipeline import *
 
@@ -23,7 +23,7 @@ class DataIngestionConfig:
 
     # Path to store the downloaded feature data
     feature_store_file_path: str = os.path.join(
-        data_ingestion_dir, DATA_INGESTION_FEATURE_STORE_DIR  # <--- Typo fixed here!
+        data_ingestion_dir, DATA_INGESTION_FEATURE_STORE_DIR
     )
 
     # Source URL for downloading the dataset
@@ -35,5 +35,8 @@ class DataValidationConfig:
         training_pipeline_config.artifacts_dir, DATA_VALIDATION_DIR_NAME
     )
 
-    valid_data_dir: str = os.path.join(data_validation_dir, DATA_VALIDATION_VALID_DIR)
-    invalid_data_dir: str = os.path.join(data_validation_dir, DATA_VALIDATION_INVALID_DIR)
+    valid_status_file_dir: str = os.path.join(data_validation_dir, DATA_VALIDATION_STATUS_FILE)
+
+    # --- FIX BELOW ---
+    # We use field(default_factory=...) to correctly handle the list assignment
+    required_file_list: list = field(default_factory=lambda: DATA_VALIDATION_ALL_REQUIRED_FILES)
