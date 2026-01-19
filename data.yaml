@@ -1,5 +1,11 @@
-train: ../train/images
-val: ../test/images
-
-nc: 7
-names: ['Hello',  'Iloveyou', 'No', 'please', 'Thanks', 'water', 'yes']
+names:
+- Hello
+- 'yes'
+- 'No'
+- Thanks
+- Iloveyou
+- please
+nc: 6
+test: D:\bappy\office\Recordings\code\Sign_language_detection\test\images
+train: D:\bappy\office\Recordings\code\Sign_language_detection\train\images
+val: D:\bappy\office\Recordings\code\Sign_language_detection\test\images

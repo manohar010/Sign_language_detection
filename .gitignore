@@ -208,3 +208,19 @@ __marimo__/
 
 artifacts/*
 Sign_language_data.zip
+# Ignore Datasets (Too large for GitHub)
+Sign_language_data/
+train/
+test/
+dataset/
+CollectedImages/
+*.zip
+
+# Ignore Trained Models (Too large for GitHub)
+*.pt
+yolov5/runs/
+yolov5/models/yolov5s.pt
+
+# Ignore Python cache
+__pycache__/
+*.pyc
