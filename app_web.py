@@ -1,26 +1,31 @@
 import os
 import cv2
-import torch
 import numpy as np
-from flask import Flask, render_template, request, Response, url_for
+from flask import Flask, render_template, request, Response
+from ultralytics import YOLO  # <--- UPDATED for YOLOv8
 
 app = Flask(__name__)
 
 # --- CONFIGURATION ---
-# Path to your trained model (from your previous screenshot)
-MODEL_PATH = r"yolov5/runs/train/yolov5s_results/weights/best.pt"
-UPLOAD_FOLDER = 'static/uploads'
+# Path to your YOLOv8 trained model
+# Based on your previous logs, it should be here:
+MODEL_PATH = r"runs/detect/yolov8_results/weights/best.pt"
 
-# Create upload folder if it doesn't exist
+# Folder configuration
+UPLOAD_FOLDER = 'static/uploads'
+PREDICT_FOLDER = 'static/predictions'
+
+# Create folders if they don't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(PREDICT_FOLDER, exist_ok=True)
 
 # Load Model
-print("Loading YOLOv5 Model...")
+print(f"Loading YOLOv8 Model from {MODEL_PATH}...")
 try:
-    model = torch.hub.load('ultralytics/yolov5', 'custom', path=MODEL_PATH, force_reload=True)
-    model.conf = 0.5  # Confidence threshold
+    model = YOLO(MODEL_PATH)  # <--- Load YOLOv8 model
 except Exception as e:
     print(f"Error loading model: {e}")
+    print("Please verify the path to your 'best.pt' file.")
     exit()
 
 # Global camera variable
@@ -36,24 +41,31 @@ def generate_frames():
         if not success:
             break
         
-        # Run detection
-        results = model(frame)
+        # Run detection (YOLOv8)
+        # stream=True is more efficient for video generators
+        results = model(frame, stream=True)
         
-        # Render boxes on the frame
-        annotated_frame = np.squeeze(results.render())
-        
-        # Encode frame to JPEG
-        ret, buffer = cv2.imencode('.jpg', annotated_frame)
-        frame_bytes = buffer.tobytes()
-        
-        # Stream the frame
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+        for result in results:
+            # Plot the results on the frame
+            # YOLOv8 returns BGR by default, perfect for OpenCV
+            annotated_frame = result.plot()
+            
+            # Encode frame to JPEG
+            ret, buffer = cv2.imencode('.jpg', annotated_frame)
+            frame_bytes = buffer.tobytes()
+            
+            # Stream the frame
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+
+    # Release camera when loop breaks (though usually this loop runs forever)
+    if camera:
+        camera.release()
 
 @app.route('/')
 def index():
     """Home page"""
-    # Close camera if it was open from a previous session
+    # Force close camera if it was open to free up resource
     global camera
     if camera is not None:
         camera.release()
@@ -71,26 +83,28 @@ def predict():
         return "No file selected", 400
 
     if file:
-        # Save original file
+        # 1. Save original file
         filepath = os.path.join(UPLOAD_FOLDER, file.filename)
         file.save(filepath)
 
-        # Run Inference
+        # 2. Run Inference
         results = model(filepath)
         
-        # Save processed image
-        results.save(save_dir=UPLOAD_FOLDER)
+        # 3. Process Result
+        # results[0].plot() returns the image as a numpy array (BGR)
+        annotated_img = results[0].plot()
         
-        # YOLO saves images in a specific way, we need to find the result
-        # Usually it saves with the same name inside the save_dir
-        # But for simplicity, let's just overwrite or find the file
-        # YOLO .save() creates a folder, let's just render the array manually to keep it simple
+        # 4. Save processed image to 'static/predictions' so HTML can see it
+        output_filename = 'pred_' + file.filename
+        output_path = os.path.join(PREDICT_FOLDER, output_filename)
         
-        annotated_img = np.squeeze(results.render())
-        result_path = os.path.join(UPLOAD_FOLDER, 'pred_' + file.filename)
-        cv2.imwrite(result_path, cv2.cvtColor(annotated_img, cv2.COLOR_RGB2BGR))
+        cv2.imwrite(output_path, annotated_img)
 
-        return render_template('index.html', image_path=result_path)
+        # 5. Return template with the new image path
+        # Note: In HTML, path should be relative to 'static' or root, not absolute system path
+        web_image_path = f"static/predictions/{output_filename}"
+        
+        return render_template('index.html', image_path=web_image_path)
 
 @app.route('/video_feed')
 def video_feed():
@@ -99,4 +113,5 @@ def video_feed():
 
 if __name__ == "__main__":
     print("Starting Web App...")
-    app.run(debug=True, port=5000)
+    # host='0.0.0.0' allows access from other devices on the same network
+    app.run(host='0.0.0.0', port=5000, debug=True)

@@ -9,14 +9,22 @@
         body { background-color: #f8f9fa; }
         .header { background-color: #007bff; color: white; padding: 20px; text-align: center; margin-bottom: 30px; }
         .btn-custom { width: 100%; margin-bottom: 10px; font-weight: bold; }
-        .display-area { background: white; border: 2px solid #ddd; height: 400px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        img { max-width: 100%; max-height: 100%; }
+        .display-area { 
+            background: white; 
+            border: 2px solid #ddd; 
+            height: 480px; /* Increased height for better video fit */
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden; 
+        }
+        img { max-width: 100%; max-height: 100%; object-fit: contain; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>Sign Language Detection using YOLOv5</h1>
+    <h1>Sign Language Detection using YOLOv8</h1>
 </div>
 
 <div class="container">
@@ -53,9 +61,11 @@
 
 <script>
     function startLive() {
-        document.getElementById('displayBox').innerHTML = '<img src="{{ url_for("video_feed") }}" style="width:100%; height:100%;">';
+        // Pointing to the video_feed route in app.py
+        document.getElementById('displayBox').innerHTML = '<img src="{{ url_for("video_feed") }}">';
     }
     function stopLive() {
+        // Reloads the page to stop the stream request
         window.location.href = "/";
     }
 </script>

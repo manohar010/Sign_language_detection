@@ -8,7 +8,7 @@ DATA_INGESTION_FEATURE_STORE_DIR: str = "feature_store"
 DATA_INGESTION_INGESTED_DIR: str = "ingested"
 
 # Use the standard shareable link with gdown
-DATA_DOWNLOAD_URL: str = "https://github.com/manohar010/Sing_data/raw/main/Sign_language_data.zip"
+DATA_DOWNLOAD_URL: str = "https://github.com/manohar010/Sing_data/raw/refs/heads/main/Sign_language_data.zip"
 
 # --- Data Validation Constants ---
 DATA_VALIDATION_DIR_NAME: str = "data_validation"

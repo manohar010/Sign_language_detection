@@ -7,6 +7,7 @@ from signLanguage.logger import logging
 from signLanguage.exception import SignException
 from signLanguage.entity.config_entity import ModelTrainerConfig
 from signLanguage.entity.artifact_entity import ModelTrainerArtifact
+from ultralytics import YOLO  # Import YOLO from ultralytics for YOLOv8
 
 class ModelTrainer:
     def __init__(
@@ -29,97 +30,98 @@ class ModelTrainer:
                 os.remove("Sign_language_data.zip")
 
             # ---------------------------------------------------------
-            # 1.5. FIX: Find and Move 'train' folder (The fix for "Dataset not found")
+            # 2. Fix Data Structure (Find 'train' folder)
             # ---------------------------------------------------------
-            # If 'train' is not in the root, find where it is hiding
             if not os.path.exists("train"):
                 print("Root 'train' folder not found. Searching subfolders...")
                 for root, dirs, files in os.walk("."):
                     if "train" in dirs:
-                        # Found the subfolder containing train
                         hidden_path = os.path.join(root, "train")
                         parent_folder = os.path.dirname(hidden_path)
-                        
                         print(f"Found data inside: {parent_folder}")
                         
-                        # Move contents of that folder to the root
                         for item in os.listdir(parent_folder):
                             src = os.path.join(parent_folder, item)
                             dst = os.path.join(".", item)
                             if not os.path.exists(dst):
                                 shutil.move(src, dst)
-                        
-                        # Cleanup empty folder
-                        # shutil.rmtree(parent_folder)  # Optional
                         break
             
             # ---------------------------------------------------------
-            # 2. Prepare YOLOv5
-            # ---------------------------------------------------------
-            if not os.path.exists("yolov5"):
-                os.system(f"git clone https://github.com/ultralytics/yolov5") 
-
-            # ---------------------------------------------------------
-            # 3. FORCE CREATE data.yaml
+            # 3. Create data.yaml (YOLOv8 format is the same as v5)
             # ---------------------------------------------------------
             print("\n" + "!"*50)
-            print("!!! GENERATING NEW DATA.YAML WITH nc=6 !!!")
+            print("!!! GENERATING NEW DATA.YAML FOR YOLOv8 !!!")
             
-            # Check if 'test' exists, if not, look for 'val'
             val_folder = "test"
             if not os.path.exists("test") and os.path.exists("val"):
                 val_folder = "val"
-                print("Found 'val' folder instead of 'test'. Using 'val'.")
             
+            # Use absolute paths to avoid confusion during training
+            cwd = os.getcwd()
             data_content = {
-                'train': os.path.abspath(os.path.join(os.getcwd(), "train", "images")),
-                'val': os.path.abspath(os.path.join(os.getcwd(), val_folder, "images")),
-                'test': os.path.abspath(os.path.join(os.getcwd(), val_folder, "images")),
+                'train': os.path.join(cwd, "train", "images"),
+                'val': os.path.join(cwd, val_folder, "images"),
+                'test': os.path.join(cwd, val_folder, "images"),
                 'nc': 6,
                 'names': ['Hello', 'yes', 'No', 'Thanks', 'Iloveyou', 'please']
             }
             
             with open("data.yaml", 'w') as f:
                 yaml.dump(data_content, f)
-            
-            print(f"File created successfully.")
-            print(f"Train Path: {data_content['train']}")
-            print(f"Val Path:   {data_content['val']}")
+                
+            print(f"data.yaml created.")
             print("!"*50 + "\n")
 
             # ---------------------------------------------------------
-            # 4. Prepare Model Config
+            # 4. Train with YOLOv8
             # ---------------------------------------------------------
-            raw_weight_name = self.model_trainer_config.weight_name
-            model_basename = raw_weight_name.replace(".pt", "") 
-            
-            config = yaml.safe_load(open(f"yolov5/models/{model_basename}.yaml"))
-            config['nc'] = 6 
-            
-            with open(f'yolov5/models/custom_{model_basename}.yaml', 'w') as f:
-                yaml.dump(config, f)
-
-            # ---------------------------------------------------------
-            # 5. Run Training
-            # ---------------------------------------------------------
-            batch_size = self.model_trainer_config.batch_size
+            # Config parameters
             epochs = self.model_trainer_config.no_epochs
+            batch_size = self.model_trainer_config.batch_size
             
-            logging.info(f"Starting training with {epochs} epochs...")
+            # Use 'yolov8s.pt' or 'yolov8n.pt' (nano) depending on your needs.
+            # If your config says 'yolov5s.pt', we force it to 'yolov8s.pt' for compatibility.
+            model_name = "yolov8s.pt" 
             
-            os.system(f"cd yolov5 && python train.py --img 416 --batch {batch_size} --epochs {epochs} --data ../data.yaml --cfg ./models/custom_{model_basename}.yaml --weights {model_basename}.pt --name yolov5s_results --cache --workers 0")
+            logging.info(f"Loading YOLOv8 model: {model_name}")
+            model = YOLO(model_name)
+
+            logging.info(f"Starting training for {epochs} epochs...")
+            
+            # Train the model
+            # YOLOv8 handles creating the 'runs' folder automatically
+            model.train(
+                data="data.yaml",
+                epochs=epochs,
+                batch=batch_size,
+                imgsz=416,
+                name="yolov8_results",  # Folder name inside runs/detect/
+                exist_ok=True,          # Overwrite if exists
+                device="cpu",           # Change to 0 for GPU, "cpu" for CPU
+                workers=0               # Windows often needs workers=0
+            )
 
             # ---------------------------------------------------------
-            # 6. Save Artifacts
+            # 5. Save Artifacts
             # ---------------------------------------------------------
             os.makedirs(self.model_trainer_config.model_trainer_dir, exist_ok=True)
-            source_best = "yolov5/runs/train/yolov5s_results/weights/best.pt"
+            
+            # YOLOv8 saves typically in: runs/detect/{name}/weights/best.pt
+            source_best = "runs/detect/yolov8_results/weights/best.pt"
             dest_best = os.path.join(self.model_trainer_config.model_trainer_dir, "best.pt")
 
             if os.path.exists(source_best):
                 shutil.copy(source_best, dest_best)
+                logging.info(f"Model saved to {dest_best}")
             else:
-                logging.warning("Training finished but best.pt not found.")
+                # Fallback: sometimes v8 saves in just 'runs/train/...' depending on version
+                alt_source = "runs/train/yolov8_results/weights/best.pt"
+                if os.path.exists(alt_source):
+                    shutil.copy(alt_source, dest_best)
+                    logging.info(f"Model saved to {dest_best} (from fallback path)")
+                else:
+                    logging.warning(f"Training finished but best.pt not found at {source_best}")
 
             model_trainer_artifact = ModelTrainerArtifact(
                 trained_model_file_path=dest_best
