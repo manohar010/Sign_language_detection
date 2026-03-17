@@ -1,12 +1,11 @@
 import cv2
 from ultralytics import YOLO
 
-# 1. Load your newly trained YOLOv8 model
-# UPDATED PATH: YOLOv8 saves typically in 'runs/detect/...'
-# Check your folder to confirm if it is 'train' or 'detect'
-model_path = r"runs/detect/yolov8_results/weights/best.pt"
+# 1. Load your newly trained YOLO11 model
+# UPDATED PATH: Pointing to the successful YOLO11 run
+model_path = r"runs/detect/yolo11_results/weights/best.pt"
 
-print(f"Loading YOLOv8 model from: {model_path}")
+print(f"Loading YOLO11 model from: {model_path}")
 
 try:
     # Load the model using the ultralytics library
@@ -32,15 +31,15 @@ while True:
         break
 
     # 3. Make Detections
-    # conf=0.4 sets the confidence threshold to 40%
+    # conf=0.4 sets the confidence threshold to 40% (it will only show boxes if it's 40%+ sure)
     results = model(frame, conf=0.4)
     
     # 4. Draw the box on the frame
-    # YOLOv8: results[0].plot() returns the image as a numpy array directly
+    # YOLO11: results[0].plot() returns the image as a numpy array directly
     annotated_frame = results[0].plot()
 
     # Display the resulting frame
-    cv2.imshow('Sign Language Detection (YOLOv8)', annotated_frame)
+    cv2.imshow('Sign Language Detection (YOLO11)', annotated_frame)
     
     # Press 'q' to quit
     if cv2.waitKey(1) & 0xFF == ord('q'):

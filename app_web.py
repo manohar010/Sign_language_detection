@@ -2,14 +2,14 @@ import os
 import cv2
 import numpy as np
 from flask import Flask, render_template, request, Response
-from ultralytics import YOLO  # <--- UPDATED for YOLOv8
+from ultralytics import YOLO  # Used for YOLO11 too
 
 app = Flask(__name__)
 
 # --- CONFIGURATION ---
-# Path to your YOLOv8 trained model
-# Based on your previous logs, it should be here:
-MODEL_PATH = r"runs/detect/yolov8_results/weights/best.pt"
+# Path to your YOLO11 trained model
+# UPDATED: Changed path to look in the yolo11_results folder based on your successful run
+MODEL_PATH = r"runs/detect/yolo11_results/weights/best.pt"
 
 # Folder configuration
 UPLOAD_FOLDER = 'static/uploads'
@@ -20,9 +20,9 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PREDICT_FOLDER, exist_ok=True)
 
 # Load Model
-print(f"Loading YOLOv8 Model from {MODEL_PATH}...")
+print(f"Loading YOLO11 Model from {MODEL_PATH}...")
 try:
-    model = YOLO(MODEL_PATH)  # <--- Load YOLOv8 model
+    model = YOLO(MODEL_PATH)  
 except Exception as e:
     print(f"Error loading model: {e}")
     print("Please verify the path to your 'best.pt' file.")
@@ -34,20 +34,19 @@ camera = None
 def generate_frames():
     """Generator function for live video streaming"""
     global camera
-    camera = cv2.VideoCapture(0)  # Open webcam
+    camera = cv2.VideoCapture(0)  # Open default webcam
     
     while True:
         success, frame = camera.read()
         if not success:
             break
         
-        # Run detection (YOLOv8)
+        # Run detection (YOLO11)
         # stream=True is more efficient for video generators
         results = model(frame, stream=True)
         
         for result in results:
             # Plot the results on the frame
-            # YOLOv8 returns BGR by default, perfect for OpenCV
             annotated_frame = result.plot()
             
             # Encode frame to JPEG
@@ -58,7 +57,7 @@ def generate_frames():
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
 
-    # Release camera when loop breaks (though usually this loop runs forever)
+    # Release camera when loop breaks
     if camera:
         camera.release()
 
@@ -101,7 +100,6 @@ def predict():
         cv2.imwrite(output_path, annotated_img)
 
         # 5. Return template with the new image path
-        # Note: In HTML, path should be relative to 'static' or root, not absolute system path
         web_image_path = f"static/predictions/{output_filename}"
         
         return render_template('index.html', image_path=web_image_path)

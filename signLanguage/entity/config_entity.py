@@ -49,7 +49,8 @@ class ModelTrainerConfig:
         training_pipeline_config.artifacts_dir, MODEL_TRAINER_DIR_NAME
     )
     
-    weight_name: str = MODEL_TRAINER_PRETRAINED_WEIGHT_NAME
+    # FIX: Renamed this variable so model_trainer.py can find it
+    model_trainer_pretrained_weight_name: str = MODEL_TRAINER_PRETRAINED_WEIGHT_NAME
     
     no_epochs: int = MODEL_TRAINER_NO_EPOCHS
     

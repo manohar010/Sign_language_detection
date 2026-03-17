@@ -7,7 +7,7 @@ from signLanguage.logger import logging
 from signLanguage.exception import SignException
 from signLanguage.entity.config_entity import ModelTrainerConfig
 from signLanguage.entity.artifact_entity import ModelTrainerArtifact
-from ultralytics import YOLO  # Import YOLO from ultralytics for YOLOv8
+from ultralytics import YOLO
 
 class ModelTrainer:
     def __init__(
@@ -48,58 +48,54 @@ class ModelTrainer:
                         break
             
             # ---------------------------------------------------------
-            # 3. Create data.yaml (YOLOv8 format is the same as v5)
+            # 3. Create data.yaml (Updated for 9 classes)
             # ---------------------------------------------------------
             print("\n" + "!"*50)
-            print("!!! GENERATING NEW DATA.YAML FOR YOLOv8 !!!")
+            print("!!! GENERATING NEW DATA.YAML FOR YOLO11 !!!")
             
             val_folder = "test"
             if not os.path.exists("test") and os.path.exists("val"):
                 val_folder = "val"
             
-            # Use absolute paths to avoid confusion during training
             cwd = os.getcwd()
             data_content = {
                 'train': os.path.join(cwd, "train", "images"),
                 'val': os.path.join(cwd, val_folder, "images"),
                 'test': os.path.join(cwd, val_folder, "images"),
-                'nc': 6,
-                'names': ['Hello', 'yes', 'No', 'Thanks', 'Iloveyou', 'please']
+                'nc': 9,
+                'names': ['Hello', 'Help', 'ILoveYou', 'No', 'Please', 'Sorry', 'Thanks', 'Water', 'Yes']
             }
             
             with open("data.yaml", 'w') as f:
                 yaml.dump(data_content, f)
                 
-            print(f"data.yaml created.")
+            print(f"data.yaml created with 9 classes.")
             print("!"*50 + "\n")
 
             # ---------------------------------------------------------
-            # 4. Train with YOLOv8
+            # 4. Train with YOLO11
             # ---------------------------------------------------------
-            # Config parameters
             epochs = self.model_trainer_config.no_epochs
             batch_size = self.model_trainer_config.batch_size
             
-            # Use 'yolov8s.pt' or 'yolov8n.pt' (nano) depending on your needs.
-            # If your config says 'yolov5s.pt', we force it to 'yolov8s.pt' for compatibility.
-            model_name = "yolov8s.pt" 
+            # !!! BULLETPROOF FIX !!! 
+            # Hardcoded to bypass any configuration file errors
+            model_name = "yolo11s.pt" 
             
-            logging.info(f"Loading YOLOv8 model: {model_name}")
+            logging.info(f"Loading YOLO model: {model_name}")
             model = YOLO(model_name)
 
             logging.info(f"Starting training for {epochs} epochs...")
             
-            # Train the model
-            # YOLOv8 handles creating the 'runs' folder automatically
             model.train(
                 data="data.yaml",
                 epochs=epochs,
                 batch=batch_size,
                 imgsz=416,
-                name="yolov8_results",  # Folder name inside runs/detect/
-                exist_ok=True,          # Overwrite if exists
-                device="cpu",           # Change to 0 for GPU, "cpu" for CPU
-                workers=0               # Windows often needs workers=0
+                name="yolo11_results",  # Changed folder name
+                exist_ok=True,          
+                device="cpu",           
+                workers=0               
             )
 
             # ---------------------------------------------------------
@@ -107,16 +103,15 @@ class ModelTrainer:
             # ---------------------------------------------------------
             os.makedirs(self.model_trainer_config.model_trainer_dir, exist_ok=True)
             
-            # YOLOv8 saves typically in: runs/detect/{name}/weights/best.pt
-            source_best = "runs/detect/yolov8_results/weights/best.pt"
+            # Update paths to look in the new yolo11_results folder
+            source_best = "runs/detect/yolo11_results/weights/best.pt"
             dest_best = os.path.join(self.model_trainer_config.model_trainer_dir, "best.pt")
 
             if os.path.exists(source_best):
                 shutil.copy(source_best, dest_best)
                 logging.info(f"Model saved to {dest_best}")
             else:
-                # Fallback: sometimes v8 saves in just 'runs/train/...' depending on version
-                alt_source = "runs/train/yolov8_results/weights/best.pt"
+                alt_source = "runs/train/yolo11_results/weights/best.pt"
                 if os.path.exists(alt_source):
                     shutil.copy(alt_source, dest_best)
                     logging.info(f"Model saved to {dest_best} (from fallback path)")

@@ -20,6 +20,6 @@ DATA_VALIDATION_ALL_REQUIRED_FILES: list = ["train", "test", "data.yaml"]
 
 # --- Model Trainer Constants ---
 MODEL_TRAINER_DIR_NAME: str = "model_trainer"
-MODEL_TRAINER_PRETRAINED_WEIGHT_NAME: str = "yolov5s.pt"
+MODEL_TRAINER_PRETRAINED_WEIGHT_NAME: str = "yolov11s.pt"
 MODEL_TRAINER_NO_EPOCHS: int = 100 
 MODEL_TRAINER_BATCH_SIZE: int = 16

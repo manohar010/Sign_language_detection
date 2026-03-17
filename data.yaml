@@ -1,11 +1,14 @@
 names:
 - Hello
-- 'yes'
+- Help
+- ILoveYou
 - 'No'
+- Please
+- Sorry
 - Thanks
-- Iloveyou
-- please
-nc: 6
-test: D:\bappy\office\Recordings\code\Sign_language_detection\test\images
-train: D:\bappy\office\Recordings\code\Sign_language_detection\train\images
-val: D:\bappy\office\Recordings\code\Sign_language_detection\test\images
+- Water
+- 'Yes'
+nc: 9
+test: D:\sign\sign\code\Sign_language_detection\test\images
+train: D:\sign\sign\code\Sign_language_detection\train\images
+val: D:\sign\sign\code\Sign_language_detection\test\images
